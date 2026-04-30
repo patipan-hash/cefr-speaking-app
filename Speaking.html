@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEFR Speaking Practice (100 Questions)</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --bg: #f3f4f6;
+            --text: #1f2937;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 { margin-top: 0; color: var(--primary); }
+        .question-box {
+            background: #e0e7ff;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        .timer-display {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 20px 0;
+            transition: color 0.3s;
+        }
+        .status { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; color: #6b7280; }
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        button:disabled { background: #9ca3af; cursor: not-allowed; }
+        .btn-copy { background: var(--success); font-size: 1rem; padding: 8px 16px; margin-top: 10px; }
+        .result-area {
+            margin-top: 30px;
+            text-align: left;
+            display: none;
+            border-top: 2px solid #e5e7eb;
+            padding-top: 20px;
+        }
+        .transcript-box {
+            background: #f9fafb;
+            border: 1px solid #d1d5db;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            min-height: 60px;
+            line-height: 1.6;
+            user-select: text; 
+        }
+        audio { width: 100%; margin-top: 15px; }
+        .q-count { font-size: 0.9rem; color: #6b7280; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>CEFR Speaking Practice</h1>
+    <div class="q-count">Question Bank: 100 Questions (Level B2)</div>
+    
+    <div class="question-box" id="questionDisplay">
+        Click "Start Test" to get a random question.
+    </div>
+
+    <div class="status" id="statusText">Ready</div>
+    <div class="timer-display" id="timeDisplay">00</div>
+
+    <button id="startBtn" onclick="startTest()">Start Test</button>
+
+    <div class="result-area" id="resultArea">
+        <h3>Your Recording:</h3>
+        <audio id="audioPlayback" controls></audio>
+        
+        <h3>Transcript (Speech-to-Text):</h3>
+        <div class="transcript-box" id="transcriptDisplay">Listening...</div>
+        
+        <button class="btn-copy" onclick="copyTranscript()">📋 คัดลอกข้อความ</button>
+        
+        <p style="font-size: 0.9rem; color: #6b7280; margin-top: 15px;">
+            <strong>วิธีวิเคราะห์:</strong> กดปุ่มคัดลอกข้อความ แล้วนำไปวางให้ AI ประเมิน พร้อมระบุคำสั่งว่า <i>"Evaluate this response based on CEFR B2 criteria. Highlight grammar mistakes and suggest better vocabulary."</i>
+        </p>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        // 1-10: Education & Learning
+        "Some people think that traditional classrooms will be replaced by online learning in the future. What is your opinion?",
+        "How important is collaboration and teamwork among teachers for improving student learning?",
+        "Some people argue that e-sports should be included in the school curriculum. Do you agree or disagree?",
+        "What are the most important qualities of a good teacher?",
+        "Do you think university education should be free for everyone? Why or why not?",
+        "Describe a project or task you completed recently that you are proud of. What challenges did you face?",
+        "In what ways can artificial intelligence be used to enhance the learning experience in classrooms?",
+        "What are the challenges of learning a new language as an adult compared to learning it as a child?",
+        "How can schools encourage students to be more creative and innovative?",
+        "Do you believe that art and music classes are as important as science and math? Explain your view.",
+        
+        // 11-20: Technology & Innovation
+        "How has technology changed the way people communicate in the workplace?",
+        "Do you think artificial intelligence will eventually replace humans in most jobs? Why or why not?",
+        "Talk about a piece of technology you cannot live without and explain how it helps you.",
+        "How do you think social media affects teenagers' mental health today?",
+        "What are the pros and cons of shopping online compared to visiting physical stores?",
+        "Describe a mobile application that you find highly useful in your daily life.",
+        "How has the way we consume news and information changed over the last decade?",
+        "What are the potential dangers of sharing too much personal information on the internet?",
+        "Do you think children today spend too much time looking at screens? What can be done about it?",
+        "How might virtual reality change the way we travel or experience entertainment in the future?",
+
+        // 21-30: Society, Work & Lifestyle
+        "What are the benefits and drawbacks of living in a large city compared to a small province?",
+        "Do you think it is more important to earn a high salary or to enjoy the job you do? Why?",
+        "What makes a good leader in a professional working environment?",
+        "Talk about a time when you had to adapt to a major change in your life or workplace.",
+        "How does advertising influence our daily purchasing decisions?",
+        "Describe a difficult decision you had to make recently and how you handled it.",
+        "What are the main causes of stress for working adults today, and how can they manage it?",
+        "Do you agree that success is primarily the result of hard work rather than luck?",
+        "Talk about a time when you worked successfully in a team to achieve a goal.",
+        "What is the importance of teaching financial management skills to young people?",
+
+        // 31-40: Environment, Travel & Culture
+        "What are the most effective ways to protect the environment in your local community?",
+        "Describe a beautiful tourist attraction in your province that you would recommend to foreigners.",
+        "How does traveling to foreign countries broaden a person's perspective?",
+        "Do you think public transport should be free to reduce traffic congestion and pollution?",
+        "How can individuals reduce their carbon footprint in their daily lives?",
+        "Describe a traditional festival or celebration in your country. Why is it important?",
+        "How important is it to preserve historical buildings in modern cities?",
+        "What are the positive and negative impacts of tourism on a local community?",
+        "Describe your ideal holiday destination. What kind of activities would you do there?",
+        "How do cultural differences affect international communication and business?",
+
+        // 41-50: Health, Hobbies & Personal Experiences
+        "Describe a healthy habit you have developed and explain how it benefits you.",
+        "How has the popularity of fast food affected people's diets and lifestyles?",
+        "Do you think competitive sports are good for children's development?",
+        "Talk about a hobby or interest that you think is unusual or highly engaging.",
+        "Describe a book or movie that had a significant impact on your life. Why was it important?",
+        "Talk about a person who has been a great influence on your personal or professional life.",
+        "Describe a situation where you had to speak in public or present an idea. How did you feel?",
+        "What are the benefits of volunteering and giving back to your local community?",
+        "Talk about a goal you have set for yourself for the next five years.",
+        "Do you think that the older generation can learn anything from the younger generation? Give examples.",
+
+        // 51-60: Future, History & Abstract Concepts
+        "How important is it for children to learn how to code or understand programming?",
+        "Do you think remote work will become the standard way of working in the future?",
+        "What are the advantages and disadvantages of studying abroad?",
+        "Describe a historical event that you find interesting. Why is it significant?",
+        "How does the quality of a teacher affect a student's attitude towards learning?",
+        "What role does music play in your culture?",
+        "Talk about a time you had to overcome a fear or a difficult obstacle.",
+        "Do you think that governments should heavily tax unhealthy foods?",
+        "How important is it to preserve local languages and dialects?",
+        "In your opinion, what is the most important invention of the 21st century so far?",
+
+        // 61-70: Modern Life & Challenges
+        "How does modern life contribute to stress, and what can we do about it?",
+        "Describe an experience where you learned something important from a mistake.",
+        "What are the benefits of reading fiction compared to non-fiction?",
+        "Do you think social media has made people more connected or more isolated?",
+        "Talk about the importance of protecting endangered animal species.",
+        "How do you think transportation will change in the next 50 years?",
+        "Discuss the impact of influencer culture on young people.",
+        "Do you think traditional printed books will completely disappear? Why or why not?",
+        "What are the challenges of managing a healthy work-life balance?",
+        "Describe a skill you would like to learn in the future and why.",
+
+        // 71-80: Globalization, Ethics & Society
+        "How important is learning about different cultures in today's globalized world?",
+        "What are the pros and cons of using artificial intelligence in the medical field?",
+        "Talk about a festival or public event you attended that was highly memorable.",
+        "Do you agree that teenagers should have part-time jobs while studying?",
+        "How can we encourage more people to use public transportation instead of private cars?",
+        "Describe the most valuable piece of advice you have ever received.",
+        "What are the ethical concerns surrounding artificial intelligence?",
+        "How does learning a second language change the way you think?",
+        "Discuss the role of sports in promoting national unity.",
+        "What impact does fast fashion have on the environment and society?",
+
+        // 81-90: Local Context, Media & Planning
+        "Describe a local dish from your region that you would recommend to visitors.",
+        "Do you think schools should focus more on practical life skills rather than academic subjects?",
+        "How do you evaluate whether the information you find online is reliable or not?",
+        "Talk about the importance of mental health awareness in schools and workplaces.",
+        "What are the main advantages of living in a multicultural society?",
+        "Describe a famous person you admire. What qualities make them admirable?",
+        "How does the design of a city or town affect the lifestyle of its residents?",
+        "Do you think space exploration is a good use of resources?",
+        "Talk about a time when you had to persuade someone to agree with your point of view.",
+        "What role should the government play in promoting renewable energy?",
+
+        // 91-100: Reflections & Professional Context
+        "How has the definition of 'success' changed between your generation and your parents' generation?",
+        "Describe a natural landscape that you find breathtaking.",
+        "Do you think people have become too dependent on their smartphones?",
+        "What are the challenges and rewards of being a teacher in the modern era?",
+        "How can gamification or e-sports be effectively used to teach difficult subjects?",
+        "Talk about a piece of art (painting, sculpture, or architecture) that you find meaningful.",
+        "Do you believe that personality is determined by genetics or by environment?",
+        "What are the biggest challenges facing young people in your country today?",
+        "How important is lifelong learning in today's rapidly changing economy?",
+        "Describe a situation where effective communication was crucial to solving a problem."
+    ];
+
+    let timerInterval;
+    let mediaRecorder;
+    let audioChunks = [];
+    let recognition;
+    let finalTranscript = '';
+
+    const timeDisplay = document.getElementById('timeDisplay');
+    const statusText = document.getElementById('statusText');
+    const questionDisplay = document.getElementById('questionDisplay');
+    const startBtn = document.getElementById('startBtn');
+    const resultArea = document.getElementById('resultArea');
+    const audioPlayback = document.getElementById('audioPlayback');
+    const transcriptDisplay = document.getElementById('transcriptDisplay');
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US'; 
+
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript + ' ';
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+            transcriptDisplay.innerHTML = finalTranscript + '<i style="color:gray;">' + interimTranscript + '</i>';
+        };
+    }
+
+    async function startTest() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            setupMediaRecorder(stream);
+        } catch (err) {
+            alert("กรุณาอนุญาตให้เบราว์เซอร์ใช้งานไมโครโฟนเพื่อทำการทดสอบ");
+            return;
+        }
+
+        startBtn.disabled = true;
+        resultArea.style.display = 'none';
+        finalTranscript = '';
+        transcriptDisplay.innerText = 'Listening...';
+        
+        const randomQ = questions[Math.floor(Math.random() * questions.length)];
+        questionDisplay.innerText = randomQ;
+
+        startTimer(15, "Preparation Time", "var(--warning)", () => {
+            startRecordingPhase();
+        });
+    }
+
+    function startRecordingPhase() {
+        audioChunks = [];
+        mediaRecorder.start();
+        if (recognition) recognition.start();
+
+        startTimer(45, "Speaking... Recording Now!", "var(--danger)", () => {
+            stopRecordingPhase();
+        });
+    }
+
+    function stopRecordingPhase() {
+        mediaRecorder.stop();
+        if (recognition) recognition.stop();
+        
+        timeDisplay.innerText = "00";
+        timeDisplay.style.color = "var(--text)";
+        statusText.innerText = "Test Completed";
+        startBtn.disabled = false;
+        startBtn.innerText = "Try Next Question";
+        
+        resultArea.style.display = 'block';
+    }
+
+    function setupMediaRecorder(stream) {
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+        };
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audioPlayback.src = audioUrl;
+        };
+    }
+
+    function startTimer(seconds, statusMessage, color, onComplete) {
+        clearInterval(timerInterval);
+        let timeLeft = seconds;
+        
+        statusText.innerText = statusMessage;
+        timeDisplay.style.color = color;
+        timeDisplay.innerText = timeLeft.toString().padStart(2, '0');
+
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            timeDisplay.innerText = timeLeft.toString().padStart(2, '0');
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                onComplete();
+            }
+        }, 1000);
+    }
+
+    function copyTranscript() {
+        const textToCopy = transcriptDisplay.innerText;
+        if(textToCopy === 'Listening...' || textToCopy.trim() === '') {
+            alert("ไม่มีข้อความให้คัดลอกครับ");
+            return;
+        }
+        
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            alert("คัดลอกข้อความสำเร็จ! นำไปวางให้ AI ตรวจได้เลยครับ");
+        }).catch(err => {
+            alert("เกิดข้อผิดพลาดในการคัดลอก: " + err);
+        });
+    }
+</script>
+
+</body>
+</html>
